@@ -1,0 +1,221 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Juego de Alfabetización - Trivia</title>
+  <link rel="stylesheet" href="mensajesdiferente.css" />
+  <link rel="stylesheet" href="botoneria.css" />
+  <link rel="stylesheet" href="estilosdiferente.css" />
+  <link rel="stylesheet" href="adaptadores.css" />
+
+  <style>
+    .container > table {
+      border-collapse: collapse;
+      width: 100%;
+      aspect-ratio: 7 / 4;
+      border: 1px solid black;
+    }
+    td {
+      border: none;
+      padding: 0;
+      text-align: center;
+      vertical-align: middle;
+    }
+    th {
+      border: 1px solid black;
+      padding: 0px;
+    }
+    #main-table {
+      width: 100%;
+      height: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    #main-table td {
+      border: 0px solid black;
+      padding: 0;
+      vertical-align: middle;
+    }
+    .usuario {
+      margin-top: 4px;
+      font-size: clamp(15px, 1.9vw, 22px);
+    }
+
+    .question {
+      font-size: clamp(14px, 1.7vw, 20px);
+      margin-bottom: 4px;
+      font-weight: normal;
+    }
+
+    .options {
+      list-style-type: none;
+      padding: 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .options li {
+      font-size: clamp(12px, 1.5vw, 16px);
+      text-align: center;
+      justify-content: center;
+      margin: 10px;
+      padding: 10px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background-color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .options li:hover {
+      background-color: #e0e0e0;
+    }
+    #toggleButton {
+      position: absolute;
+      bottom: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 160px;
+      padding: 6px 14px;
+      font-size: clamp(11px, 1.3vw, 15px);
+      font-weight: bold;
+      cursor: pointer;
+      border: 1px solid #888;
+      background-color: #A0B4BA;
+      color: #333;
+      border-radius: 6px;
+      opacity: 0.9;
+      transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.2s;
+      text-align: center;
+      white-space: nowrap;
+      transform-origin: center;
+    }
+    #toggleButton:hover {
+      transform: translateX(-50%) scale(1.05);
+      background-color: #B8C9CF;
+      opacity: 1;
+    }
+    .fixed-width {
+      width: 40%;
+      aspect-ratio: 1 / 1;
+      text-align: center;
+      padding: 20px;
+    }
+    .fixed-width2 {
+      width: 90%;
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f0f0f0;
+      border: 1px solid black;
+    }
+    #questionImage {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: none; /* por defecto oculto */
+    }
+    #reloj {
+      width: 65%;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background: conic-gradient(#2ecc71 100%, #ecf0f1 0%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin: auto;
+      user-select: none;
+      border: 1px solid #333;
+    }
+
+    .clickable-hover {
+      cursor: pointer;
+      transition: transform 0.2s ease, text-shadow 0.2s ease;
+    }
+
+    .clickable-hover:hover {
+      transform: scale(1.05); /* pequeño acercamiento */
+    }
+
+  </style>
+</head>
+<body>
+  <div id="start-button-container">
+    <button id="start-button">COMENZAR EL JUEGO</button>
+  </div>
+
+  <div class="container">
+    <table>
+      <tr>
+        <th colspan="3" class="title-cell" style="text-align: center;">
+          <div class="question" id="question"></div>
+        </th>
+      </tr>
+      <tr>
+        <!-- Celda imagen (se oculta si no hay imagen) -->
+<td id="image-cell" class="fixed-width" style="display: none;">
+  <div class="fixed-width2" style="position: relative;">
+    <img id="questionImage" src="" alt="" style="width: 100%; height: auto; display: block;">
+     <button id="speaker-button" 
+        style="
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        display: none;
+        padding: 0;
+      "
+        title="Escuchar pista">
+      <img src="image/speaker-icon.png" alt="Escuchar pista" style="width: 24px; height: 24px;">
+    </button>
+  </div>
+</td>
+        <!-- Celda opciones -->
+        <td id="options-cell">
+          <ul class="options" id="options"></ul>
+          <div class="found-message" id="message"></div>
+        </td>
+        <!-- Celda panel -->
+        <td id="align-left-top" class="celda-panel">
+          <div id="panel">
+            <div>
+              <div id="actualUsername"></div>
+              <br>
+              <div id="timeacumulado">Tiempo: 00:00</div>
+              <div id="fallidos">Errores: 0</div>
+              <div id="puntaje">Puntaje: 0</div>
+              <br><br>
+              <div id="reloj">15</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+
+    </table>
+<button id="toggleButton" style="display: none;">Cancelar Lectura</button>
+  </div>
+
+  <!-- Audios generales -->
+  <audio id="audio-musica-pregunta" src="sounds/musicapregunta.mp3"></audio>
+  <audio id="audio-tictac" src="sounds/tictac.mp3" loop></audio>
+  <audio id="audio-tiempo-agotado" src="sounds/finportiempo.mp3"></audio>
+  <audio id="audio-error" src="sounds/finporintentos.mp3"></audio>
+  <audio id="audio-correcto" src="sounds/finporcompletar.mp3"></audio>
+  <audio id="audio-correcto2" src="sounds/correcto.mp3"></audio>
+  <audio id="audio-error2" src="sounds/error.mp3"></audio>
+  <audio id="background-music" loop>
+    <source src="sounds/Celesta.mp3" type="audio/mpeg" />
+    Tu navegador no soporta la reproducción de audio.
+  </audio>
+  <audio id="audio-palabra"></audio>
+
+  <script src="trivia.js"></script>
+</body>
+</html>
