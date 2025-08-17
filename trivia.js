@@ -412,6 +412,7 @@ function showMessagexExito() {
 
   // Esta función carga la pregunta y configura todo
 function loadQuestion() {
+  // Detener y limpiar audio anterior
   if (questionAudioPlayer) {
     questionAudioPlayer.pause();
     questionAudioPlayer.removeEventListener('ended', onQuestionAudioEnded);
@@ -421,72 +422,26 @@ function loadQuestion() {
   questionElement.textContent = currentQuestion.question;
   optionsElement.innerHTML = '';
 
-  // Reset imagen y botón parlante
-  questionImage.style.display = 'none';
-  questionImage.src = '';
-  questionImage.onclick = null;
+  // --- LIMPIEZA COMPLETA DE LA IMAGEN ---
+  questionImage.replaceWith(questionImage.cloneNode(true));
+  questionImage = document.getElementById('questionImage');
+
+  questionImage.src = currentQuestion.image || '';
+  questionImage.dataset.secondImage = currentQuestion.secondImage || '';
+  questionImage.dataset.birdAudio = currentQuestion.birdAudio || '';
+  questionImage._timeoutId = null;
   questionImage.style.pointerEvents = 'none';
   questionImage.classList.remove('clickable-hover');
+  questionImage.onclick = null;
 
+  imageCell.style.display = currentQuestion.image ? 'table-cell' : 'none';
+
+  // --- LIMPIEZA DEL BOTÓN PARLANTE ---
   const speakerButton = document.getElementById('speaker-button');
   speakerButton.style.display = 'none';
   speakerButton.onclick = null;
   speakerButton.style.pointerEvents = 'none';
   speakerButton.style.opacity = '0.4';
-
-  // Mostrar imagen si corresponde
-  if (currentQuestion.type === 'imageaudio') {
-    if (currentQuestion.image) {
-      questionImage.style.display = 'block';
-      imageCell.style.display = 'table-cell';
-      questionImage.src = currentQuestion.image;
-
-      speakerButton.style.display = 'block';
-      speakerButton._playAudioFunc = () => {
-        if (repeatBirdAudio) {
-          repeatBirdAudio.pause();
-          repeatBirdAudio.currentTime = 0;
-        }
-        if (currentQuestion.birdAudio) {
-          repeatBirdAudio = new Audio(currentQuestion.birdAudio);
-          repeatBirdAudio.play().catch(console.error);
-        }
-      };
-    } else {
-      imageCell.style.display = 'none';
-      questionImage.style.display = 'none';
-    }
-
-  } else if (currentQuestion.type === 'soloaudio') {
-    if (currentQuestion.image && currentQuestion.audioImage) {
-      questionImage.style.display = 'block';
-      imageCell.style.display = 'table-cell';
-      questionImage.src = currentQuestion.image;
-
-      questionImage._playImageAudio = () => {
-        if (repeatBirdAudio) {
-          repeatBirdAudio.pause();
-          repeatBirdAudio.currentTime = 0;
-        }
-        repeatBirdAudio = new Audio(currentQuestion.audioImage);
-        repeatBirdAudio.play().catch(console.error);
-      };
-    } else {
-      imageCell.style.display = 'none';
-    }
-
-  } else {
-    if (currentQuestion.image) {
-      questionImage.style.display = 'block';
-      imageCell.style.display = 'table-cell';
-      questionImage.src = currentQuestion.image;
-    } else {
-      imageCell.style.display = 'none';
-    }
-  }
-
-  questionImage.dataset.secondImage = currentQuestion.secondImage || '';
-  questionImage.dataset.birdAudio = currentQuestion.birdAudio || '';
 
   // Crear opciones
   shuffleArray(currentQuestion.options);
@@ -531,7 +486,7 @@ function loadQuestion() {
     // Detectar si es dispositivo táctil
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    // Tipos de imagen interactiva
+    // --- IMAGEN INTERACTIVA ---
     if (currentQuestion.type === 'imageChange' && questionImage.dataset.secondImage) {
       questionImage.style.pointerEvents = 'auto';
       questionImage.classList.add('clickable-hover');
@@ -540,6 +495,7 @@ function loadQuestion() {
       questionImage.replaceWith(questionImage.cloneNode(true));
       questionImage = document.getElementById('questionImage');
       questionImage._timeoutId = null;
+      questionImage.src = currentQuestion.image;
       questionImage.dataset.secondImage = currentQuestion.secondImage;
 
       if (isTouchDevice) {
@@ -564,9 +520,8 @@ function loadQuestion() {
             }
           }
         });
-        questionImage.src = currentQuestion.image; // reiniciar imagen original
       } else {
-        // PC: comportamiento original
+        // PC: hover / click original
         questionImage.addEventListener('mousedown', () => {
           questionImage.src = questionImage.dataset.secondImage;
         });
@@ -576,7 +531,6 @@ function loadQuestion() {
         questionImage.addEventListener('mouseleave', () => {
           questionImage.src = currentQuestion.image;
         });
-        questionImage.src = currentQuestion.image; // reiniciar imagen original
       }
     } 
     else if (currentQuestion.type === 'soloaudio' && questionImage._playImageAudio) {
@@ -594,6 +548,7 @@ function loadQuestion() {
       speakerButton.style.pointerEvents = 'auto';
       speakerButton.style.opacity = '1';
       speakerButton.onclick = speakerButton._playAudioFunc;
+      speakerButton.style.display = 'block';
     }
 
     // Reproducir música de fondo de la pregunta
@@ -654,3 +609,4 @@ questionImage.addEventListener('mouseleave', () => {
 
 
 });
+
