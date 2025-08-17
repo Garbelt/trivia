@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   // Variables globales y elementos DOM
   const questionElement = document.getElementById('question');
   const optionsElement = document.getElementById('options');
@@ -13,7 +13,6 @@
   let questionAudioPlayer = null;
   let repeatQuestionAudio = null;
   let repeatBirdAudio = null;     // Para reiniciar el audio del botón parlante
-
 
   const actualUsername = localStorage.getItem("ActualUs") || "Invitado";
   document.getElementById("actualUsername").textContent = `Usuario: ${actualUsername}`;
@@ -31,9 +30,7 @@
       ],
       audio: 'audio/question1.mp3',
       image: 'image/imagen01.jpg',
-      
     },
-
     {
       question: '¿CÓMO SE LLAMA EL PÁJARO QUE APARECE EN LA IMAGEN?',
       type: "soloaudio",
@@ -48,7 +45,6 @@
       image: 'image/imagen01.jpg',
       audioImage: 'audio/cotorra-canto.mp3'
     },
-
     {
       question: '¿CÓMO SE LLAMA EL PÁJARO QUE APARECE EN LA IMAGEN?',
       type: "simple",
@@ -68,7 +64,7 @@
           { text: 'COTORRA.', correct: false, audio: 'audio/COTORRA.mp3' },
           { text: 'HORNERO.', correct: true, audio: 'audio/HORNERO.mp3' },
           { text: 'TERO.', correct: false, audio: 'audio/TERO.mp3' },
-          { text: 'CHINGOLO.', correct: false, audio: 'CHINGOLO.mp3' },
+          { text: 'CHINGOLO.', correct: false, audio: 'audio/CHINGOLO.mp3' },
           { text: 'CARDENAL.', correct: false, audio: 'audio/CARDENAL.mp3' },
       ],
       audio: 'audio/question1.mp3',
@@ -108,67 +104,58 @@
       }
   }
 
-function enableOptions() {
-  const options = optionsElement.querySelectorAll('li');
-  options.forEach(option => {
-      option.style.pointerEvents = 'auto';
-  });
+  function enableOptions() {
+      const options = optionsElement.querySelectorAll('li');
+      options.forEach(option => option.style.pointerEvents = 'auto');
+      questionElement.style.pointerEvents = 'auto';
+      questionElement.style.cursor = 'pointer';
+      questionElement.classList.add('clickable-hover');
 
-  // Habilitar la pregunta para repetir audio
-  questionElement.style.pointerEvents = 'auto';
-  questionElement.style.cursor = 'pointer';
-  questionElement.classList.add('clickable-hover');
+      if (['imageChange', 'imageaudio'].includes(questions[currentQuestionIndex].type)) {
+          questionImage.style.pointerEvents = 'auto';
+          questionImage.classList.add('clickable-hover');
+      }
 
-  // Habilitar la imagen solo si es clicable
-  if (questions[currentQuestionIndex].type === 'imageChange' || questions[currentQuestionIndex].type === 'imageaudio') {
-      questionImage.style.pointerEvents = 'auto';
-      questionImage.classList.add('clickable-hover');
+      const speakerButton = document.getElementById('speaker-button');
+      speakerButton.style.pointerEvents = 'auto';
+      speakerButton.style.opacity = '1';
+      speakerButton.onclick = speakerButton._playAudioFunc || null;
   }
 
-  const speakerButton = document.getElementById('speaker-button');
-  speakerButton.style.pointerEvents = 'auto';
-  speakerButton.style.opacity = '1';
-  speakerButton.onclick = speakerButton._playAudioFunc || null;
-}
+  function disableOptions() {
+      const options = optionsElement.querySelectorAll('li');
+      options.forEach(option => option.style.pointerEvents = 'none');
 
-function disableOptions() {
-  const options = optionsElement.querySelectorAll('li');
-  options.forEach(option => {
-      option.style.pointerEvents = 'none';
-  });
+      questionElement.style.pointerEvents = 'none';
+      questionElement.style.cursor = 'default';
+      questionElement.classList.remove('clickable-hover');
 
-  questionElement.style.pointerEvents = 'none';
-  questionElement.style.cursor = 'default';
-  questionElement.classList.remove('clickable-hover');
+      questionImage.style.pointerEvents = 'none';
+      questionImage.classList.remove('clickable-hover');
 
-  questionImage.style.pointerEvents = 'none';
-  questionImage.classList.remove('clickable-hover');
-
-  const speakerButton = document.getElementById('speaker-button');
-  speakerButton.style.pointerEvents = 'none';
-  speakerButton.style.opacity = '0.4';
-  speakerButton.onclick = null;
-}
-
+      const speakerButton = document.getElementById('speaker-button');
+      speakerButton.style.pointerEvents = 'none';
+      speakerButton.style.opacity = '0.4';
+      speakerButton.onclick = null;
+  }
 
   function iniciarTemporizador() {
-    clearInterval(intervaloTemporizador);
-    let tiempoRestante = 15;
+      clearInterval(intervaloTemporizador);
+      let tiempoRestante = 15;
+      actualizarRelojGrafico(tiempoRestante);
+      audioTictac.currentTime = 0;
+      audioTictac.play().catch(e => console.log('No se pudo reproducir tictac:', e));
+      iniciarTiempoAcumulado();
 
-    actualizarRelojGrafico(tiempoRestante);
-    audioTictac.currentTime = 0;
-    audioTictac.play().catch(e => console.log('No se pudo reproducir tictac:', e));
-    iniciarTiempoAcumulado();
-
-    intervaloTemporizador = setInterval(() => {
-      tiempoRestante--;
-      if (tiempoRestante < 0) {
-        clearInterval(intervaloTemporizador);
-        manejarTiempoAgotado();
-      } else {
-        actualizarRelojGrafico(tiempoRestante);
-      }
-    }, 1000);
+      intervaloTemporizador = setInterval(() => {
+          tiempoRestante--;
+          if (tiempoRestante < 0) {
+              clearInterval(intervaloTemporizador);
+              manejarTiempoAgotado();
+          } else {
+              actualizarRelojGrafico(tiempoRestante);
+          }
+      }, 1000);
   }
 
   function iniciarTiempoAcumulado() {
@@ -184,435 +171,194 @@ function disableOptions() {
   }
 
   function actualizarRelojGrafico(tiempoRestante, tiempoTotal = 15) {
-    const porcentaje = (tiempoRestante / tiempoTotal) * 100;
-    const reloj = document.getElementById('reloj');
-    const porcentajeInvertido = 100 - porcentaje;
-    reloj.style.background = `conic-gradient(from 0deg at 50% 50%, #2ecc71  ${porcentajeInvertido}%, #ecf0f1 ${porcentajeInvertido}%)`;
-    reloj.textContent = `${tiempoRestante}`;
+      const porcentaje = (tiempoRestante / tiempoTotal) * 100;
+      const reloj = document.getElementById('reloj');
+      const porcentajeInvertido = 100 - porcentaje;
+      reloj.style.background = `conic-gradient(from 0deg at 50% 50%, #2ecc71 ${porcentajeInvertido}%, #ecf0f1 ${porcentajeInvertido}%)`;
+      reloj.textContent = `${tiempoRestante}`;
   }
 
   function playAudio(audioSrc) {
-    const audio = new Audio(audioSrc);
-    audio.play().catch(error => console.error('Audio playback failed:', error));
-    return audio;
+      const audio = new Audio(audioSrc);
+      audio.play().catch(error => console.error('Audio playback failed:', error));
+      return audio;
   }
 
-function playOptionAudio(event) {
-  // Detener cualquier audio que ya esté reproduciéndose
-  optionAudioPlayers.forEach(player => {
-    player.pause();
-    player.currentTime = 0; // Reinicia por si se reproduce más tarde
-  });
-  optionAudioPlayers = [];
+  function playOptionAudio(event) {
+      optionAudioPlayers.forEach(player => {
+          player.pause();
+          player.currentTime = 0;
+      });
+      optionAudioPlayers = [];
 
-  // Reproducir solo si la lectura no está pausada
-  if (!audioPaused) {
-    const audioSrc = event.target.dataset.audio;
-    if (audioSrc) {
-      const player = playAudio(audioSrc);
-      optionAudioPlayers.push(player);
-    }
+      if (!audioPaused) {
+          const audioSrc = event.target.dataset.audio;
+          if (audioSrc) {
+              const player = playAudio(audioSrc);
+              optionAudioPlayers.push(player);
+          }
+      }
   }
-}
 
   function showMessage(text, type) {
-    const audioSrc = type === 'correct' ? 'sounds/correcto.mp3' : 'sounds/error.mp3';
-    playAudio(audioSrc);
-    messageElement.textContent = text;
-    messageElement.className = `found-message ${type}`;
-    messageElement.style.display = 'block';
+      const audioSrc = type === 'correct' ? 'sounds/correcto.mp3' : 'sounds/error.mp3';
+      playAudio(audioSrc);
+      messageElement.textContent = text;
+      messageElement.className = `found-message ${type}`;
+      messageElement.style.display = 'block';
   }
 
-  function manejarTiempoAgotado() {
-    clearInterval(intervaloTemporizador);
-    fadeOutAudio(document.getElementById('audio-musica-pregunta'), 2000);
-    audioTictac.pause();
-    detenerTiempoAcumulado();
-    disableOptions();
-
-    errores++;
-    fallidosElement.textContent = `Errores: ${errores}`;
-
-    questions.push(questions[currentQuestionIndex]);
-    questions.splice(currentQuestionIndex, 1);
-
-    showMessage('ERROR', 'error');
-
-    setTimeout(() => {
-      messageElement.style.display = 'none';
-      if (currentQuestionIndex >= questions.length) {
-          currentQuestionIndex = 0;
+  // ---------- Aquí va la versión completa y corregida de loadQuestion ----------
+  function loadQuestion() {
+      if (questionAudioPlayer) {
+          questionAudioPlayer.pause();
+          questionAudioPlayer.removeEventListener('ended', questionAudioPlayer._onEndedHandler);
+          questionAudioPlayer = null;
       }
-      loadQuestion();
-    }, 2000);
-  }
 
-  function fadeOutAudio(audio, duration) {
-    let volume = audio.volume;
-    const step = volume / (duration / 100);
-    const fadeAudio = setInterval(() => {
-      if (volume > 0) {
-        volume -= step;
-        if (volume < 0) volume = 0;
-        audio.volume = volume;
-      } else {
-        clearInterval(fadeAudio);
-      }
-    }, 100);
-  }
+      const currentQuestion = questions[currentQuestionIndex];
+      questionElement.textContent = currentQuestion.question;
 
-  function formatearTiempo(segundosTotales) {
-    const minutos = Math.floor(segundosTotales / 60);
-    const segundos = segundosTotales % 60;
-    return `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
-  }
+      optionsElement.innerHTML = '';
+      questionImage.style.display = currentQuestion.image ? 'block' : 'none';
+      questionImage.src = currentQuestion.image || '';
+      imageCell.style.display = currentQuestion.image ? 'table-cell' : 'none';
+      questionImage.dataset.secondImage = currentQuestion.secondImage || '';
+      questionImage.dataset.birdAudio = currentQuestion.birdAudio || '';
 
-function handleOptionClick(event) {
-  optionAudioPlayers.forEach(player => player.pause());
-  if(questionAudioPlayer) questionAudioPlayer.pause();
-  clearInterval(intervaloTemporizador);
-  audioTictac.pause();
-  detenerTiempoAcumulado();
-
-  disableOptions(); // ahora también deshabilita título, imagen y botón parlante
-
-  const correct = event.target.dataset.correct === 'true';
-
-  if (correct) {
-    fadeOutAudio(document.getElementById('audio-musica-pregunta'), 2000);
-    puntaje += 20;
-    score += 20;
-    puntajeElement.textContent = `Puntaje: ${puntaje}`;
-    showMessage('CORRECTO', 'correct');
-
-    setTimeout(() => {
-      messageElement.style.display = 'none';
-      enableOptions(); // habilita TODO de nuevo
-      questions.splice(currentQuestionIndex, 1);
-
-      if (questions.length === 0) {
-        showMessagexExito();
-      } else {
-        if (currentQuestionIndex >= questions.length) {
-          currentQuestionIndex = 0;
-        }
-        loadQuestion();
-      }
-    }, 5000);
-  } else {
-    fadeOutAudio(document.getElementById('audio-musica-pregunta'), 2000);
-    errores++;
-    fallidosElement.textContent = `Errores: ${errores}`;
-
-    questions.push(questions[currentQuestionIndex]);
-    questions.splice(currentQuestionIndex, 1);
-
-    showMessage('ERROR', 'error');
-
-    setTimeout(() => {
-      messageElement.style.display = 'none';
-      enableOptions(); // habilita TODO de nuevo
-
-      if (currentQuestionIndex >= questions.length) {
-        currentQuestionIndex = 0;
-      }
-      loadQuestion();
-    }, 2000);
-  }
-}
-
-
-function showMessagexExito() {
-  // Deshabilitar clics en opciones y otros elementos clave
-  disableOptions();
-  questionElement.style.pointerEvents = 'none';
-  questionElement.style.cursor = 'default';
-  questionImage.style.pointerEvents = 'none';
-  const speakerButton = document.getElementById('speaker-button');
-  speakerButton.style.pointerEvents = 'none';
-  speakerButton.style.opacity = '0.4';
-  speakerButton.onclick = null;
-
-  let bonus = Math.floor((score - tiempoTotalSegundos) / (errores + 1));
-  if (bonus < 0) bonus = 0;
-  score += bonus;
-
-  const message = document.createElement("div");
-  message.classList.add("found-message");
-  message.innerHTML = `
-    <div style="font-weight: bold; font-size: 32px;">¡FELICITACIONES!</div>
-    <div style="font-size: 24px;">Has completado el juego.</div>
-    <div style="margin-top: 10px; font-size: 20px;">Puntaje final: ${score} (Bonus: ${bonus})</div>
-  `;
-  document.body.appendChild(message);
-  document.body.classList.add("disable-clicks");
-  message.style.display = "block";
-  message.style.zIndex = "9999";
-
-  fadeOutAudio(document.getElementById('background-music'), 4000);
-
-  const audioFin = new Audio("sounds/finporcompletar.mp3");
-  audioFin.play();
-
-  setTimeout(() => {
-    endGame();
-    almacenarRegistroConZ(score);
-    window.location.href = "out.html";
-  }, 7000);
-}
-
-
-  function endGame() {
-    const currentDate = new Date().toLocaleDateString();
-    const userData = {
-      fecha: currentDate,
-      usuario: localStorage.getItem("ActualUs"),
-      puntaje: score,
-      juegonumero: incrementGameNumber(),
-      game: "AVE_trivia",
-      rutina: localStorage.getItem("rutina")
-    };
-    const gamesHistory = JSON.parse(localStorage.getItem("gamesHistory")) || [];
-    gamesHistory.push(userData);
-    localStorage.setItem("gamesHistory", JSON.stringify(gamesHistory));
-    updateAcumulado(score);
-  }
-
-  function updateAcumulado(scoreToAdd) {
-    let acumulado = parseInt(localStorage.getItem("acumulado")) || 0;
-    acumulado += scoreToAdd;
-    localStorage.setItem("acumulado", acumulado);
-  }
-
-  function incrementGameNumber() {
-    let gameNumber = parseInt(localStorage.getItem("gameNumber")) || 0;
-    gameNumber++;
-    localStorage.setItem("gameNumber", gameNumber);
-    return gameNumber;
-  }
-
-  function almacenarRegistroConZ(finalScore) {
-    const juegonumero = localStorage.getItem("gameNumber") || 1;
-    const fechaActual = new Date().toLocaleDateString();
-    const usuario = localStorage.getItem("ActualUs") || "Desconocido";
-    const acumulado = localStorage.getItem("acumulado") || 0;
-    const rutina = localStorage.getItem("rutina") || "No disponible";
-
-    const registro = {
-      juegoZ: `Juego ${juegonumero}Z`,
-      fecha: fechaActual,
-      usuario: usuario,
-      acumulado: acumulado,
-      rutina: rutina
-    };
-
-    localStorage.setItem(`registroConZ-${Date.now()}`, JSON.stringify(registro));
-    console.log("Registro almacenado con Z:", registro);
-  }
-
-  // Esta función carga la pregunta y configura todo
-function loadQuestion() {
-  // Detener y limpiar audio anterior
-  if (questionAudioPlayer) {
-    questionAudioPlayer.pause();
-    questionAudioPlayer.removeEventListener('ended', onQuestionAudioEnded);
-  }
-
-  const currentQuestion = questions[currentQuestionIndex];
-  questionElement.textContent = currentQuestion.question;
-  optionsElement.innerHTML = '';
-
-  // --- LIMPIEZA DE LA IMAGEN ---
-  questionImage.style.pointerEvents = 'none';
-  questionImage.classList.remove('clickable-hover');
-  questionImage.onclick = null;
-
-  // Limpiar timeout pendiente
-  if (questionImage._timeoutId) {
-    clearTimeout(questionImage._timeoutId);
-    questionImage._timeoutId = null;
-  }
-
-  // Quitar listeners antiguos
-  questionImage.removeEventListener('mousedown', questionImage._mousedownHandler);
-  questionImage.removeEventListener('mouseup', questionImage._mouseupHandler);
-  questionImage.removeEventListener('mouseleave', questionImage._mouseleaveHandler);
-  questionImage.removeEventListener('click', questionImage._clickHandler);
-
-  // Reiniciar src y dataset
-  questionImage.src = currentQuestion.image || '';
-  questionImage.dataset.secondImage = currentQuestion.secondImage || '';
-  questionImage.dataset.birdAudio = currentQuestion.birdAudio || '';
-  imageCell.style.display = currentQuestion.image ? 'table-cell' : 'none';
-
-  // --- LIMPIEZA DEL BOTÓN PARLANTE ---
-  const speakerButton = document.getElementById('speaker-button');
-  speakerButton.style.display = 'none';
-  speakerButton.onclick = null;
-  speakerButton.style.pointerEvents = 'none';
-  speakerButton.style.opacity = '0.4';
-
-  // Crear opciones
-  shuffleArray(currentQuestion.options);
-  currentQuestion.options.forEach((option) => {
-    const li = document.createElement('li');
-    li.textContent = option.text;
-    li.dataset.correct = option.correct;
-    li.dataset.audio = option.audio;
-    li.style.pointerEvents = 'none';
-    li.addEventListener('click', handleOptionClick);
-    li.addEventListener('mouseover', playOptionAudio);
-    optionsElement.appendChild(li);
-  });
-
-  // Preparar audio de la pregunta
-  if (repeatQuestionAudio) {
-    repeatQuestionAudio.pause();
-    repeatQuestionAudio.currentTime = 0;
-  }
-  repeatQuestionAudio = new Audio(currentQuestion.audio);
-  questionAudioPlayer = repeatQuestionAudio;
-
-  // Deshabilitar interacción mientras se lee la pregunta
-  disableOptions();
-
-  function onQuestionAudioEnded() {
-    enableOptions();
-    iniciarTemporizador();
-
-    // Pregunta clicable
-    questionElement.classList.add('clickable-hover');
-    questionElement.style.cursor = 'pointer';
-    questionElement.onclick = () => {
-      if (repeatQuestionAudio) {
-        repeatQuestionAudio.pause();
-        repeatQuestionAudio.currentTime = 0;
-      }
-      repeatQuestionAudio = new Audio(currentQuestion.audio);
-      repeatQuestionAudio.play().catch(console.error);
-    };
-
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-    // --- IMAGEN INTERACTIVA ---
-    if (currentQuestion.type === 'imageChange' && questionImage.dataset.secondImage) {
-      questionImage.style.pointerEvents = 'auto';
-      questionImage.classList.add('clickable-hover');
-
-      if (isTouchDevice) {
-        // Celulares: toggle al clic
-        const clickHandler = () => {
-          const secondImageSrc = questionImage.dataset.secondImage;
-          const originalImage = currentQuestion.image;
-          const isSecondImage = questionImage.src.includes(secondImageSrc);
-
-          if (!isSecondImage) {
-            questionImage.src = secondImageSrc;
-            if (questionImage._timeoutId) clearTimeout(questionImage._timeoutId);
-            questionImage._timeoutId = setTimeout(() => {
-              questionImage.src = originalImage;
-              questionImage._timeoutId = null;
-            }, 4000);
-          } else {
-            questionImage.src = originalImage;
-            if (questionImage._timeoutId) {
-              clearTimeout(questionImage._timeoutId);
-              questionImage._timeoutId = null;
-            }
+      // Limpiar listeners antiguos
+      ['mousedown', 'mouseup', 'mouseleave', 'click'].forEach(ev => {
+          if (questionImage['_'+ev+'Handler']) {
+              questionImage.removeEventListener(ev, questionImage['_'+ev+'Handler']);
+              questionImage['_'+ev+'Handler'] = null;
           }
-        };
-        questionImage._clickHandler = clickHandler;
-        questionImage.addEventListener('click', clickHandler);
-      } else {
-        // PC: hover / click original
-        const mousedownHandler = () => { questionImage.src = questionImage.dataset.secondImage; };
-        const mouseupHandler = () => { questionImage.src = currentQuestion.image; };
-        const mouseleaveHandler = () => { questionImage.src = currentQuestion.image; };
-
-        questionImage._mousedownHandler = mousedownHandler;
-        questionImage._mouseupHandler = mouseupHandler;
-        questionImage._mouseleaveHandler = mouseleaveHandler;
-
-        questionImage.addEventListener('mousedown', mousedownHandler);
-        questionImage.addEventListener('mouseup', mouseupHandler);
-        questionImage.addEventListener('mouseleave', mouseleaveHandler);
+      });
+      if (questionImage._timeoutId) {
+          clearTimeout(questionImage._timeoutId);
+          questionImage._timeoutId = null;
       }
-    } 
-    else if (currentQuestion.type === 'soloaudio' && questionImage._playImageAudio) {
-      questionImage.classList.add('clickable-hover');
-      questionImage.style.pointerEvents = 'auto';
-      questionImage.onclick = questionImage._playImageAudio;
-    } 
-    else {
-      questionImage.classList.remove('clickable-hover');
-      questionImage.style.pointerEvents = 'none';
-    }
 
-    // Habilitar botón parlante si corresponde
-    if (speakerButton._playAudioFunc) {
-      speakerButton.style.pointerEvents = 'auto';
-      speakerButton.style.opacity = '1';
-      speakerButton.onclick = speakerButton._playAudioFunc;
-      speakerButton.style.display = 'block';
-    }
+      shuffleArray(currentQuestion.options);
+      currentQuestion.options.forEach(option => {
+          const li = document.createElement('li');
+          li.textContent = option.text;
+          li.dataset.correct = option.correct;
+          li.dataset.audio = option.audio;
+          li.style.pointerEvents = 'none';
+          li.addEventListener('click', handleOptionClick);
+          li.addEventListener('mouseover', playOptionAudio);
+          optionsElement.appendChild(li);
+      });
 
-    // Reproducir música de fondo de la pregunta
-    const musicaPregunta = document.getElementById('audio-musica-pregunta');
-    musicaPregunta.volume = 1;
-    musicaPregunta.currentTime = 0;
-    musicaPregunta.play().catch(console.error);
+      repeatQuestionAudio = new Audio(currentQuestion.audio);
+      questionAudioPlayer = repeatQuestionAudio;
+      disableOptions();
+
+      function onQuestionAudioEnded() {
+          enableOptions();
+          iniciarTemporizador();
+
+          questionElement.classList.add('clickable-hover');
+          questionElement.style.cursor = 'pointer';
+          questionElement.onclick = () => {
+              if (repeatQuestionAudio) {
+                  repeatQuestionAudio.pause();
+                  repeatQuestionAudio.currentTime = 0;
+                  repeatQuestionAudio.play().catch(console.error);
+              }
+          };
+
+          const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+          if (currentQuestion.type === 'imageChange' && questionImage.dataset.secondImage) {
+              questionImage.style.pointerEvents = 'auto';
+              questionImage.classList.add('clickable-hover');
+
+              if (isTouchDevice) {
+                  const clickHandler = () => {
+                      const secondImage = questionImage.dataset.secondImage;
+                      const originalImage = currentQuestion.image;
+                      const isSecond = questionImage.src.includes(secondImage);
+                      if (!isSecond) {
+                          questionImage.src = secondImage;
+                          if (questionImage._timeoutId) clearTimeout(questionImage._timeoutId);
+                          questionImage._timeoutId = setTimeout(() => {
+                              questionImage.src = originalImage;
+                              questionImage._timeoutId = null;
+                          }, 4000);
+                      } else {
+                          questionImage.src = originalImage;
+                          if (questionImage._timeoutId) {
+                              clearTimeout(questionImage._timeoutId);
+                              questionImage._timeoutId = null;
+                          }
+                      }
+                  };
+                  questionImage._clickHandler = clickHandler;
+                  questionImage.addEventListener('click', clickHandler);
+              } else {
+                  const mousedownHandler = () => { questionImage.src = questionImage.dataset.secondImage; };
+                  const mouseupHandler = () => { questionImage.src = currentQuestion.image; };
+                  const mouseleaveHandler = () => { questionImage.src = currentQuestion.image; };
+                  questionImage._mousedownHandler = mousedownHandler;
+                  questionImage._mouseupHandler = mouseupHandler;
+                  questionImage._mouseleaveHandler = mouseleaveHandler;
+                  questionImage.addEventListener('mousedown', mousedownHandler);
+                  questionImage.addEventListener('mouseup', mouseupHandler);
+                  questionImage.addEventListener('mouseleave', mouseleaveHandler);
+              }
+          } else if (currentQuestion.type === 'soloaudio' && currentQuestion.audioImage) {
+              questionImage.style.pointerEvents = 'auto';
+              questionImage.classList.add('clickable-hover');
+              questionImage.onclick = () => {
+                  if (repeatBirdAudio) {
+                      repeatBirdAudio.pause();
+                      repeatBirdAudio.currentTime = 0;
+                  }
+                  repeatBirdAudio = new Audio(currentQuestion.audioImage);
+                  repeatBirdAudio.play().catch(console.error);
+              };
+          } else if (currentQuestion.type === 'imageaudio' && currentQuestion.birdAudio) {
+              const speakerButton = document.getElementById('speaker-button');
+              speakerButton.style.pointerEvents = 'auto';
+              speakerButton.style.opacity = '1';
+              speakerButton._playAudioFunc = () => {
+                  if (repeatBirdAudio) {
+                      repeatBirdAudio.pause();
+                      repeatBirdAudio.currentTime = 0;
+                  }
+                  repeatBirdAudio = new Audio(currentQuestion.birdAudio);
+                  repeatBirdAudio.play().catch(console.error);
+              };
+              speakerButton.onclick = speakerButton._playAudioFunc;
+          }
+
+          const musicaPregunta = document.getElementById('audio-musica-pregunta');
+          musicaPregunta.volume = 1;
+          musicaPregunta.currentTime = 0;
+          musicaPregunta.play().catch(console.error);
+      }
+
+      questionAudioPlayer._onEndedHandler = onQuestionAudioEnded;
+      questionAudioPlayer.addEventListener('ended', onQuestionAudioEnded);
+      questionAudioPlayer.play().catch(console.error);
   }
 
-  questionAudioPlayer.addEventListener('ended', onQuestionAudioEnded);
-  questionAudioPlayer.play().catch(console.error);
-}
+  // Aquí seguirían todas las demás funciones: handleOptionClick, fadeOutAudio, etc., igual que tu código original.
 
-
-
-// Cambio de imagen mientras se mantiene presionado el clic
-questionImage.addEventListener('mousedown', () => {
-  const currentQuestion = questions[currentQuestionIndex];
-  if (currentQuestion.type === 'imageChange') {
-    const secondImageSrc = questionImage.dataset.secondImage;
-    if (secondImageSrc) {
-      questionImage.src = secondImageSrc;
-    }
-  }
-});
-
-questionImage.addEventListener('mouseup', () => {
-  const currentQuestion = questions[currentQuestionIndex];
-  if (currentQuestion.type === 'imageChange' && currentQuestion.image) {
-    questionImage.src = currentQuestion.image;
-  }
-});
-
-questionImage.addEventListener('mouseleave', () => {
-  const currentQuestion = questions[currentQuestionIndex];
-  if (currentQuestion.type === 'imageChange' && currentQuestion.image) {
-    questionImage.src = currentQuestion.image;
-  }
-});
-
-
-  // Botón de inicio
   document.getElementById("start-button").addEventListener("click", () => {
-    document.getElementById("start-button-container").style.display = "none";
-    toggleButton.style.display = "block";
-    document.querySelector(".container").style.display = "flex";
+      document.getElementById("start-button-container").style.display = "none";
+      toggleButton.style.display = "block";
+      document.querySelector(".container").style.display = "flex";
 
-    const audio = document.getElementById("background-music");
-    audio.play().catch(console.error);
+      const audio = document.getElementById("background-music");
+      audio.play().catch(console.error);
 
-    loadQuestion();
+      loadQuestion();
   });
 
   toggleButton.addEventListener('click', () => {
-    audioPaused = !audioPaused;
-    toggleButton.textContent = audioPaused ? 'Activar Lectura' : 'Cancelar Lectura';
+      audioPaused = !audioPaused;
+      toggleButton.textContent = audioPaused ? 'Activar Lectura' : 'Cancelar Lectura';
   });
-
-
 });
-
-
