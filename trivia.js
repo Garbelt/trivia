@@ -536,6 +536,12 @@ function loadQuestion() {
       questionImage.style.pointerEvents = 'auto';
       questionImage.classList.add('clickable-hover');
 
+      // Limpiar listeners y timeouts previos
+      questionImage.replaceWith(questionImage.cloneNode(true));
+      questionImage = document.getElementById('questionImage');
+      questionImage._timeoutId = null;
+      questionImage.dataset.secondImage = currentQuestion.secondImage;
+
       if (isTouchDevice) {
         // Celulares: toggle al clic
         questionImage.addEventListener('click', () => {
@@ -558,8 +564,9 @@ function loadQuestion() {
             }
           }
         });
+        questionImage.src = currentQuestion.image; // reiniciar imagen original
       } else {
-        // PC: comportamiento original con mousedown/mouseup/mouseleave
+        // PC: comportamiento original
         questionImage.addEventListener('mousedown', () => {
           questionImage.src = questionImage.dataset.secondImage;
         });
@@ -569,6 +576,7 @@ function loadQuestion() {
         questionImage.addEventListener('mouseleave', () => {
           questionImage.src = currentQuestion.image;
         });
+        questionImage.src = currentQuestion.image; // reiniciar imagen original
       }
     } 
     else if (currentQuestion.type === 'soloaudio' && questionImage._playImageAudio) {
@@ -598,7 +606,6 @@ function loadQuestion() {
   questionAudioPlayer.addEventListener('ended', onQuestionAudioEnded);
   questionAudioPlayer.play().catch(console.error);
 }
-
 
 
 
@@ -644,5 +651,6 @@ questionImage.addEventListener('mouseleave', () => {
     audioPaused = !audioPaused;
     toggleButton.textContent = audioPaused ? 'Activar Lectura' : 'Cancelar Lectura';
   });
+
 
 });
