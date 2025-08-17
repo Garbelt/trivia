@@ -422,18 +422,27 @@ function loadQuestion() {
   questionElement.textContent = currentQuestion.question;
   optionsElement.innerHTML = '';
 
-  // --- LIMPIEZA COMPLETA DE LA IMAGEN ---
-  questionImage.replaceWith(questionImage.cloneNode(true));
-  questionImage = document.getElementById('questionImage');
-
-  questionImage.src = currentQuestion.image || '';
-  questionImage.dataset.secondImage = currentQuestion.secondImage || '';
-  questionImage.dataset.birdAudio = currentQuestion.birdAudio || '';
-  questionImage._timeoutId = null;
+  // --- LIMPIEZA DE LA IMAGEN ---
   questionImage.style.pointerEvents = 'none';
   questionImage.classList.remove('clickable-hover');
   questionImage.onclick = null;
 
+  // Limpiar timeout pendiente
+  if (questionImage._timeoutId) {
+    clearTimeout(questionImage._timeoutId);
+    questionImage._timeoutId = null;
+  }
+
+  // Quitar listeners antiguos
+  questionImage.removeEventListener('mousedown', questionImage._mousedownHandler);
+  questionImage.removeEventListener('mouseup', questionImage._mouseupHandler);
+  questionImage.removeEventListener('mouseleave', questionImage._mouseleaveHandler);
+  questionImage.removeEventListener('click', questionImage._clickHandler);
+
+  // Reiniciar src y dataset
+  questionImage.src = currentQuestion.image || '';
+  questionImage.dataset.secondImage = currentQuestion.secondImage || '';
+  questionImage.dataset.birdAudio = currentQuestion.birdAudio || '';
   imageCell.style.display = currentQuestion.image ? 'table-cell' : 'none';
 
   // --- LIMPIEZA DEL BOTÓN PARLANTE ---
@@ -483,7 +492,6 @@ function loadQuestion() {
       repeatQuestionAudio.play().catch(console.error);
     };
 
-    // Detectar si es dispositivo táctil
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
     // --- IMAGEN INTERACTIVA ---
@@ -491,16 +499,9 @@ function loadQuestion() {
       questionImage.style.pointerEvents = 'auto';
       questionImage.classList.add('clickable-hover');
 
-      // Limpiar listeners y timeouts previos
-      questionImage.replaceWith(questionImage.cloneNode(true));
-      questionImage = document.getElementById('questionImage');
-      questionImage._timeoutId = null;
-      questionImage.src = currentQuestion.image;
-      questionImage.dataset.secondImage = currentQuestion.secondImage;
-
       if (isTouchDevice) {
         // Celulares: toggle al clic
-        questionImage.addEventListener('click', () => {
+        const clickHandler = () => {
           const secondImageSrc = questionImage.dataset.secondImage;
           const originalImage = currentQuestion.image;
           const isSecondImage = questionImage.src.includes(secondImageSrc);
@@ -519,18 +520,22 @@ function loadQuestion() {
               questionImage._timeoutId = null;
             }
           }
-        });
+        };
+        questionImage._clickHandler = clickHandler;
+        questionImage.addEventListener('click', clickHandler);
       } else {
         // PC: hover / click original
-        questionImage.addEventListener('mousedown', () => {
-          questionImage.src = questionImage.dataset.secondImage;
-        });
-        questionImage.addEventListener('mouseup', () => {
-          questionImage.src = currentQuestion.image;
-        });
-        questionImage.addEventListener('mouseleave', () => {
-          questionImage.src = currentQuestion.image;
-        });
+        const mousedownHandler = () => { questionImage.src = questionImage.dataset.secondImage; };
+        const mouseupHandler = () => { questionImage.src = currentQuestion.image; };
+        const mouseleaveHandler = () => { questionImage.src = currentQuestion.image; };
+
+        questionImage._mousedownHandler = mousedownHandler;
+        questionImage._mouseupHandler = mouseupHandler;
+        questionImage._mouseleaveHandler = mouseleaveHandler;
+
+        questionImage.addEventListener('mousedown', mousedownHandler);
+        questionImage.addEventListener('mouseup', mouseupHandler);
+        questionImage.addEventListener('mouseleave', mouseleaveHandler);
       }
     } 
     else if (currentQuestion.type === 'soloaudio' && questionImage._playImageAudio) {
@@ -609,4 +614,5 @@ questionImage.addEventListener('mouseleave', () => {
 
 
 });
+
 
