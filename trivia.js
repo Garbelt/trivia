@@ -424,7 +424,9 @@ function loadQuestion() {
   optionsElement.innerHTML = '';
 
   // Reset imagen y botón parlante
-  questionImage.style.display = 'none';
+  const newQuestionImage = questionImage.cloneNode(true);
+  imageCell.replaceChild(newQuestionImage, questionImage);
+  questionImage = newQuestionImage;
   questionImage.src = '';
   questionImage.onclick = null;
   questionImage.style.pointerEvents = 'none';
@@ -436,7 +438,7 @@ function loadQuestion() {
   speakerButton.style.pointerEvents = 'none';
   speakerButton.style.opacity = '0.4';
 
-  // Mostrar imagen si corresponde
+  // Mostrar imagen según tipo de pregunta
   if (currentQuestion.type === 'imageaudio') {
     if (currentQuestion.image) {
       questionImage.style.display = 'block';
@@ -460,13 +462,11 @@ function loadQuestion() {
     }
 
   } else if (currentQuestion.type === 'soloaudio') {
-    // Imagen clickeable que reproduce un audio específico
     if (currentQuestion.image && currentQuestion.audioImage) {
       questionImage.style.display = 'block';
       imageCell.style.display = 'table-cell';
       questionImage.src = currentQuestion.image;
 
-      // Guardamos la función de reproducción
       questionImage._playImageAudio = () => {
         if (repeatBirdAudio) {
           repeatBirdAudio.pause();
@@ -480,7 +480,6 @@ function loadQuestion() {
     }
 
   } else {
-    // Casos normales con imagen fija o sin imagen
     if (currentQuestion.image) {
       questionImage.style.display = 'block';
       imageCell.style.display = 'table-cell';
@@ -492,6 +491,7 @@ function loadQuestion() {
 
   questionImage.dataset.secondImage = currentQuestion.secondImage || '';
   questionImage.dataset.birdAudio = currentQuestion.birdAudio || '';
+  questionImage.dataset.toggleState = 'original'; // para móvil
 
   // Crear opciones
   shuffleArray(currentQuestion.options);
@@ -514,8 +514,7 @@ function loadQuestion() {
   repeatQuestionAudio = new Audio(currentQuestion.audio);
   questionAudioPlayer = repeatQuestionAudio;
 
-  // Deshabilitar interacción mientras se lee la pregunta
-  disableOptions();
+  disableOptions(); // deshabilitar mientras se lee la pregunta
 
   function onQuestionAudioEnded() {
     enableOptions();
@@ -533,58 +532,48 @@ function loadQuestion() {
       repeatQuestionAudio.play().catch(console.error);
     };
 
-    // Tipos de imagen interactiva
-if (currentQuestion.type === 'imageChange' && questionImage.dataset.secondImage) {
-    questionImage.style.pointerEvents = 'auto';
-    questionImage.classList.add('clickable-hover');
-
-    if (tipoDispositivo === 'pc') {
-        // Lógica con mouse
-        questionImage.addEventListener('mousedown', () => {
-            questionImage.src = currentQuestion.secondImage;
-        });
-        questionImage.addEventListener('mouseup', () => {
-            questionImage.src = currentQuestion.image;
-        });
-        questionImage.addEventListener('mouseleave', () => {
-            questionImage.src = currentQuestion.image;
-        });
-    } else if (tipoDispositivo === 'movil') {
-        // Lógica con touch/click
-        let movilTimeout;
+    // Imagen interactiva según dispositivo y tipo
+    if (currentQuestion.type === 'imageChange' && questionImage.dataset.secondImage) {
+      if (isMobile) {
         questionImage.addEventListener('click', () => {
-            if (questionImage.src.includes(currentQuestion.image)) {
-                questionImage.src = currentQuestion.secondImage;
-                // Volver a la original después de 4 segundos si no hay otro clic
-                movilTimeout = setTimeout(() => {
-                    questionImage.src = currentQuestion.image;
-                }, 4000);
-            } else {
+          if (questionImage.dataset.toggleState === 'original') {
+            questionImage.src = currentQuestion.secondImage;
+            questionImage.dataset.toggleState = 'alt';
+            setTimeout(() => {
+              if (questionImage.dataset.toggleState === 'alt') {
                 questionImage.src = currentQuestion.image;
-                clearTimeout(movilTimeout);
-            }
+                questionImage.dataset.toggleState = 'original';
+              }
+            }, 4000);
+          } else {
+            questionImage.src = currentQuestion.image;
+            questionImage.dataset.toggleState = 'original';
+          }
         });
-    }
-}
- 
-    else if (currentQuestion.type === 'soloaudio' && questionImage._playImageAudio) {
+      } else {
+        questionImage.addEventListener('mousedown', () => questionImage.src = currentQuestion.secondImage);
+        questionImage.addEventListener('mouseup', () => questionImage.src = currentQuestion.image);
+        questionImage.addEventListener('mouseleave', () => questionImage.src = currentQuestion.image);
+      }
+      questionImage.classList.add('clickable-hover');
+      questionImage.style.pointerEvents = 'auto';
+    } else if (currentQuestion.type === 'soloaudio' && questionImage._playImageAudio) {
       questionImage.classList.add('clickable-hover');
       questionImage.style.pointerEvents = 'auto';
       questionImage.onclick = questionImage._playImageAudio;
-    } 
-    else {
+    } else {
       questionImage.classList.remove('clickable-hover');
       questionImage.style.pointerEvents = 'none';
     }
 
-    // Habilitar botón parlante si corresponde
+    // Botón parlante
     if (speakerButton._playAudioFunc) {
       speakerButton.style.pointerEvents = 'auto';
       speakerButton.style.opacity = '1';
       speakerButton.onclick = speakerButton._playAudioFunc;
     }
 
-    // Reproducir música de fondo de la pregunta
+    // Reproducir música de fondo
     const musicaPregunta = document.getElementById('audio-musica-pregunta');
     musicaPregunta.volume = 1;
     musicaPregunta.currentTime = 0;
@@ -629,5 +618,6 @@ function detectarDispositivo() {
     audioPaused = !audioPaused;
     toggleButton.textContent = audioPaused ? 'Activar Lectura' : 'Cancelar Lectura';
   });
+
 
 });
