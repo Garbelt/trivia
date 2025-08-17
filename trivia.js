@@ -414,6 +414,7 @@ function showMessagexExito() {
 
   // Esta función carga la pregunta y configura todo
 function loadQuestion() {
+  // Detener audio anterior
   if (questionAudioPlayer) {
     questionAudioPlayer.pause();
     questionAudioPlayer.removeEventListener('ended', onQuestionAudioEnded);
@@ -423,82 +424,41 @@ function loadQuestion() {
   questionElement.textContent = currentQuestion.question;
   optionsElement.innerHTML = '';
 
-  // Limpiar listeners anteriores
+  // Resetear imagen
+  questionImage.src = '';
+  questionImage.style.display = 'none';
+  questionImage.style.pointerEvents = 'none';
+  questionImage.classList.remove('clickable-hover');
+  questionImage.dataset.toggleState = 'original';
   questionImage.onclick = null;
   questionImage.onmousedown = null;
   questionImage.onmouseup = null;
   questionImage.onmouseleave = null;
 
-  // Resetear propiedades
-  questionImage.src = '';
-  questionImage.style.pointerEvents = 'none';
-  questionImage.classList.remove('clickable-hover');
-  questionImage.dataset.toggleState = 'original';
-
+  // Resetear botón parlante
   const speakerButton = document.getElementById('speaker-button');
   speakerButton.style.display = 'none';
   speakerButton.onclick = null;
   speakerButton.style.pointerEvents = 'none';
   speakerButton.style.opacity = '0.4';
+  speakerButton._playAudioFunc = null;
 
   // Mostrar imagen según tipo de pregunta
-  if (currentQuestion.type === 'imageaudio') {
-    if (currentQuestion.image) {
-      questionImage.style.display = 'block';
-      imageCell.style.display = 'table-cell';
-      questionImage.src = currentQuestion.image;
-
-      speakerButton.style.display = 'block';
-      speakerButton._playAudioFunc = () => {
-        if (repeatBirdAudio) {
-          repeatBirdAudio.pause();
-          repeatBirdAudio.currentTime = 0;
-        }
-        if (currentQuestion.birdAudio) {
-          repeatBirdAudio = new Audio(currentQuestion.birdAudio);
-          repeatBirdAudio.play().catch(console.error);
-        }
-      };
-    } else {
-      imageCell.style.display = 'none';
-      questionImage.style.display = 'none';
-    }
-
-  } else if (currentQuestion.type === 'soloaudio') {
-    if (currentQuestion.image && currentQuestion.audioImage) {
-      questionImage.style.display = 'block';
-      imageCell.style.display = 'table-cell';
-      questionImage.src = currentQuestion.image;
-
-      questionImage._playImageAudio = () => {
-        if (repeatBirdAudio) {
-          repeatBirdAudio.pause();
-          repeatBirdAudio.currentTime = 0;
-        }
-        repeatBirdAudio = new Audio(currentQuestion.audioImage);
-        repeatBirdAudio.play().catch(console.error);
-      };
-    } else {
-      imageCell.style.display = 'none';
-    }
-
+  if (currentQuestion.image) {
+    questionImage.style.display = 'block';
+    imageCell.style.display = 'table-cell';
+    questionImage.src = currentQuestion.image;
   } else {
-    if (currentQuestion.image) {
-      questionImage.style.display = 'block';
-      imageCell.style.display = 'table-cell';
-      questionImage.src = currentQuestion.image;
-    } else {
-      imageCell.style.display = 'none';
-    }
+    imageCell.style.display = 'none';
   }
 
+  // Guardar datos auxiliares
   questionImage.dataset.secondImage = currentQuestion.secondImage || '';
   questionImage.dataset.birdAudio = currentQuestion.birdAudio || '';
-  questionImage.dataset.toggleState = 'original'; // para móvil
 
   // Crear opciones
   shuffleArray(currentQuestion.options);
-  currentQuestion.options.forEach((option) => {
+  currentQuestion.options.forEach(option => {
     const li = document.createElement('li');
     li.textContent = option.text;
     li.dataset.correct = option.correct;
@@ -519,11 +479,12 @@ function loadQuestion() {
 
   disableOptions(); // deshabilitar mientras se lee la pregunta
 
+  // Función al terminar audio de pregunta
   function onQuestionAudioEnded() {
     enableOptions();
     iniciarTemporizador();
 
-    // Efecto hover y click solo en la pregunta
+    // Hacer clic en la pregunta para repetir audio
     questionElement.classList.add('clickable-hover');
     questionElement.style.cursor = 'pointer';
     questionElement.onclick = () => {
@@ -535,7 +496,7 @@ function loadQuestion() {
       repeatQuestionAudio.play().catch(console.error);
     };
 
-    // Imagen interactiva según dispositivo y tipo
+    // Interacción con imagen según tipo de pregunta
     if (currentQuestion.type === 'imageChange' && questionImage.dataset.secondImage) {
       if (tipoDispositivo === 'movil') {
         questionImage.onclick = () => {
@@ -560,17 +521,30 @@ function loadQuestion() {
       }
       questionImage.classList.add('clickable-hover');
       questionImage.style.pointerEvents = 'auto';
-    } else if (currentQuestion.type === 'soloaudio' && questionImage._playImageAudio) {
+
+    } else if (currentQuestion.type === 'soloaudio' && currentQuestion.audioImage) {
+      questionImage._playImageAudio = () => {
+        if (repeatBirdAudio) {
+          repeatBirdAudio.pause();
+          repeatBirdAudio.currentTime = 0;
+        }
+        repeatBirdAudio = new Audio(currentQuestion.audioImage);
+        repeatBirdAudio.play().catch(console.error);
+      };
       questionImage.classList.add('clickable-hover');
       questionImage.style.pointerEvents = 'auto';
       questionImage.onclick = questionImage._playImageAudio;
-    } else {
-      questionImage.classList.remove('clickable-hover');
-      questionImage.style.pointerEvents = 'none';
-    }
 
-    // Botón parlante
-    if (speakerButton._playAudioFunc) {
+    } else if (currentQuestion.type === 'imageaudio' && currentQuestion.birdAudio) {
+      speakerButton._playAudioFunc = () => {
+        if (repeatBirdAudio) {
+          repeatBirdAudio.pause();
+          repeatBirdAudio.currentTime = 0;
+        }
+        repeatBirdAudio = new Audio(currentQuestion.birdAudio);
+        repeatBirdAudio.play().catch(console.error);
+      };
+      speakerButton.style.display = 'block';
       speakerButton.style.pointerEvents = 'auto';
       speakerButton.style.opacity = '1';
       speakerButton.onclick = speakerButton._playAudioFunc;
@@ -622,6 +596,7 @@ function detectarDispositivo() {
     audioPaused = !audioPaused;
     toggleButton.textContent = audioPaused ? 'Activar Lectura' : 'Cancelar Lectura';
   });
+
 
 
 });
